@@ -1,0 +1,5 @@
+aoc-runner
+*.a
+*.o
+*.s
+*.env
