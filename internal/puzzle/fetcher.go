@@ -2,7 +2,6 @@ package puzzle
 
 import (
 	"io"
-	"log"
 	"mime"
 	"net/http"
 
@@ -97,8 +96,6 @@ func (f *EventFetcher) Parse(htmlBody io.Reader) ([]Event, error) {
 		if n.Type == html.ElementNode && n.Data == "div" {
 			// check attr
 			if checkAttr(n.Attr) && n.FirstChild != nil {
-				// log.Println()
-				log.Println(n.FirstChild)
 				event := parseEvent(n.FirstChild)
 				if event != nil {
 					events = append(events, *event)
