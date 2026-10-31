@@ -13,5 +13,9 @@ type FetchError struct {
 }
 
 func (e *FetchError) Error() string {
-	return fmt.Sprintf("failed to fetch. status_code = %d, url = %s, err = %s", e.StatusCode, e.URL, e.Err.Error())
+	if e.Err == nil {
+		return fmt.Sprintf("failed to fetch. status_code = %d, url = %s", e.StatusCode, e.URL)
+	}
+
+	return fmt.Sprintf("failed to fetch. status_code = %d, url = %s, err = %s", e.StatusCode, e.URL, e.Err)
 }
