@@ -5,6 +5,8 @@ import (
 	"mime"
 	"net/http"
 	"regexp"
+	"slices"
+	"strings"
 
 	"golang.org/x/net/html"
 )
@@ -16,8 +18,8 @@ const (
 )
 
 var (
-	yearPattern         = regexp.MustCompile(`\[([0-9]{4})\]`)
-	calendaryDayPattern = regexp.MustCompile(`calendar-day([0-9]{1,2})`)
+	yearPattern         = regexp.MustCompile(`^\[([0-9]{4})\]$`)
+	calendaryDayPattern = regexp.MustCompile(`^calendar-day([0-9]{1,2})$`)
 )
 
 func YearExtractor(year string) string {
@@ -88,24 +90,28 @@ func (f *EventFetcher) Fetch(eager bool) ([]Event, error) {
 		return nil, err
 	}
 
+	defer resp.Body.Close()
 	// Parse HTML body
 	return f.Parse(resp.Body, eager)
 }
 
 func checkAttr(attrs []html.Attribute, k, v string) bool {
 	for _, attr := range attrs {
-		if attr.Key == k && attr.Val == v {
-			return true
+		if attr.Key == k {
+			if slices.Contains(strings.Fields(attr.Val), v) {
+				return true
+			}
 		}
 	}
-
 	return false
 }
 
 func checkAttrPattern(attrs []html.Attribute, k string, pattern *regexp.Regexp) bool {
 	for _, attr := range attrs {
-		if attr.Key == k && pattern.MatchString(attr.Val) {
-			return true
+		if attr.Key == k {
+			if slices.ContainsFunc(strings.Fields(attr.Val), pattern.MatchString) {
+				return true
+			}
 		}
 	}
 
@@ -124,10 +130,11 @@ func extractAttr(attrs []html.Attribute, key string) string {
 
 func (f *EventFetcher) fetchDays(event *Event) ([]Day, error) {
 	eventResponse, err := f.makeGet(event.URL)
-
 	if err != nil {
 		return nil, err
 	}
+
+	defer eventResponse.Body.Close()
 
 	return f.parseDays(eventResponse.Body)
 }
@@ -189,7 +196,7 @@ func (f *EventFetcher) Parse(htmlBody io.Reader, eager bool) ([]Event, error) {
 	}
 
 	parseEvent := func(child *html.Node) (*Event, error) {
-		link := child.Attr[0].Val
+		link := extractAttr(child.Attr, "href")
 		text := child.FirstChild.Data
 
 		event := &Event{
