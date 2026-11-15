@@ -1,6 +1,7 @@
 package puzzle
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -54,8 +55,10 @@ func TestFetchSuccess(t *testing.T) {
 
 	setupHappyPath()
 
+	bgCtx := context.Background()
+
 	fetcher := NewEventFetcher(http.DefaultClient)
-	events, err := fetcher.Fetch(true)
+	events, err := fetcher.Fetch(bgCtx, true)
 
 	if err != nil {
 		t.Error(err)

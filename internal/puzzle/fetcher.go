@@ -1,6 +1,7 @@
 package puzzle
 
 import (
+	"context"
 	"io"
 	"mime"
 	"net/http"
@@ -49,8 +50,14 @@ type EventFetcher struct {
 	client *http.Client
 }
 
-func (f *EventFetcher) makeGet(url string) (*http.Response, error) {
-	response, err := f.client.Get(url)
+func (f *EventFetcher) makeGet(ctx context.Context, url string) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := f.client.Do(req)
 
 	if err != nil {
 		return nil, err
@@ -83,8 +90,9 @@ func (f *EventFetcher) makeGet(url string) (*http.Response, error) {
 	return response, nil
 }
 
-func (f *EventFetcher) Fetch(eager bool) ([]Event, error) {
-	resp, err := f.makeGet(EventsURL)
+func (f *EventFetcher) Fetch(ctx context.Context, eager bool) ([]Event, error) {
+
+	resp, err := f.makeGet(ctx, EventsURL)
 
 	if err != nil {
 		return nil, err
@@ -92,7 +100,7 @@ func (f *EventFetcher) Fetch(eager bool) ([]Event, error) {
 
 	defer resp.Body.Close()
 	// Parse HTML body
-	return f.Parse(resp.Body, eager)
+	return f.Parse(ctx, resp.Body, eager)
 }
 
 func checkAttr(attrs []html.Attribute, k, v string) bool {
@@ -128,8 +136,8 @@ func extractAttr(attrs []html.Attribute, key string) string {
 	return ""
 }
 
-func (f *EventFetcher) fetchDays(event *Event) ([]Day, error) {
-	eventResponse, err := f.makeGet(event.URL)
+func (f *EventFetcher) fetchDays(ctx context.Context, event *Event) ([]Day, error) {
+	eventResponse, err := f.makeGet(ctx, event.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +194,7 @@ func (f *EventFetcher) eachNodeFunc(root *html.Node, filter func(*html.Node) boo
 	return nil
 }
 
-func (f *EventFetcher) Parse(htmlBody io.Reader, eager bool) ([]Event, error) {
+func (f *EventFetcher) Parse(ctx context.Context, htmlBody io.Reader, eager bool) ([]Event, error) {
 	var events []Event
 
 	doc, err := html.Parse(htmlBody)
@@ -206,7 +214,7 @@ func (f *EventFetcher) Parse(htmlBody io.Reader, eager bool) ([]Event, error) {
 		}
 
 		if eager {
-			days, err := f.fetchDays(event)
+			days, err := f.fetchDays(ctx, event)
 
 			if err != nil {
 				return nil, err

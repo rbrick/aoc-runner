@@ -13,8 +13,8 @@ const (
 type Puzzle struct {
 	ID int `gorm:"column:id;primaryKey;autoIncrement"`
 
-	EventID string `gorm:"column:event_id;"`
-	Day     string `gorm:"column:day;"`
+	EventID int    `gorm:"column:event_id;uniqueIndex:idx_event_day"`
+	Day     string `gorm:"column:day;uniqueIndex:idx_event_day"`
 
 	Status    Status    `gorm:"column:status;"`
 	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime;"`

@@ -3,3 +3,4 @@ aoc-runner
 *.o
 *.s
 *.env
+*.db
