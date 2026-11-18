@@ -1,0 +1,32 @@
+import java.util.*;
+import java.io.*;
+import java.math.*;
+import java.time.*;
+import java.util.stream.*;
+
+{{ .Solution }}
+
+
+void main() throws IOException {
+    final var stdIn = new String(System.in.readAllBytes());
+    final var solution = new Solution();
+
+    final var originalOut = System.out;
+
+    var partOne = "";
+    var partTwo = "";
+
+    try {
+        // Redirect stdout to stderr
+        System.setOut(System.err);
+
+        partOne = solution.partOne(new StringReader(stdIn));
+        partTwo = solution.partTwo(new StringReader(stdIn));
+    } finally {
+        System.setOut(originalOut);
+    }
+
+
+    System.out.println(partOne);
+    System.out.println(partTwo);
+}
