@@ -8,6 +8,5 @@ import (
 )
 
 func Migrate(ctx context.Context, db *gorm.DB) error {
-	return db.WithContext(ctx).AutoMigrate(model.Event{}, model.Puzzle{})
-
+	return db.WithContext(ctx).AutoMigrate(&model.Event{}, &model.Puzzle{})
 }
