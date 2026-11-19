@@ -1,12 +1,17 @@
 package java
 
 import (
+	"bytes"
 	"context"
 	_ "embed"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"text/template"
+	"time"
+
+	"github.com/rbrick/aoc-runner/internal/runner"
 )
 
 const (
@@ -19,6 +24,8 @@ const (
        return "";
    }
 }`
+
+	SourceFileName = "code.java"
 )
 
 //go:embed java.template
@@ -33,24 +40,75 @@ type TemplateData struct {
 
 type JavaLanguage struct{}
 
-// So in this context
-func (*JavaLanguage) Build(ctx context.Context, code string) (string, error) {
-	// first build and check for errors
-	tempFile, err := os.CreateTemp(os.TempDir(), "code.java")
+func (*JavaLanguage) Build(ctx context.Context, code string) (*runner.BuildInfo, error) {
+	directory, err := os.MkdirTemp("", "aoc-runner-java-")
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	path := filepath.Join(os.TempDir(), "code.java")
+	path := filepath.Join(directory, SourceFileName)
 
-	JavaTemplate.ExecuteTemplate(tempFile, "java", &TemplateData{
-		Solution: code,
-	})
+	if err := writeSource(path, code); err != nil {
+		os.RemoveAll(directory)
+		return nil, err
+	}
 
 	cmd := exec.CommandContext(ctx, "javac", path)
-	cmd.Run()
-	return "", nil
+
+	started := time.Now()
+	compileErrors, err := runner.CaptureStderr(cmd)
+
+	build := &runner.BuildInfo{
+		ArtifactPath: path,
+		Duration:     time.Since(started),
+		Errors:       compileErrors,
+	}
+
+	if err != nil {
+		// nothing to run, clean up the build directory
+		os.RemoveAll(directory)
+		return build, err
+	}
+
+	return build, nil
 }
 
-func (*JavaLanguage) Run(ctx context.Context, code string) (string, error)
+func (*JavaLanguage) Run(ctx context.Context, artifactPath string) (*runner.RunInfo, error) {
+	var stdout bytes.Buffer
+
+	classPath := filepath.Dir(artifactPath)
+	className := strings.TrimSuffix(filepath.Base(artifactPath), filepath.Ext(artifactPath))
+
+	cmd := exec.CommandContext(ctx, "java", "-cp", classPath, className)
+	cmd.Stdout = &stdout
+
+	started := time.Now()
+	runErrors, err := runner.CaptureStderr(cmd)
+
+	run := &runner.RunInfo{
+		Output:   stdout.String(),
+		Duration: time.Since(started),
+		Errors:   runErrors,
+	}
+
+	if err != nil {
+		return run, err
+	}
+
+	return run, nil
+}
+
+func writeSource(path, code string) error {
+	file, err := os.Create(path)
+
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	return JavaTemplate.ExecuteTemplate(file, "java", &TemplateData{
+		Solution: code,
+	})
+}
