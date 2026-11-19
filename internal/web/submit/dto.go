@@ -10,6 +10,8 @@ import (
 type SubmissionDTO struct {
 	Language string `json:"language"`
 	Code     string `json:"code"`
+	// passed to the solution on stdin
+	Input string `json:"input"`
 }
 
 type BuildDTO struct {

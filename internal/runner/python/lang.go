@@ -88,10 +88,11 @@ func (*PythonLanguage) Build(ctx context.Context, code string) (*runner.BuildInf
 	return build, nil
 }
 
-func (*PythonLanguage) Run(ctx context.Context, build *runner.BuildInfo) (*runner.RunInfo, error) {
+func (*PythonLanguage) Run(ctx context.Context, build *runner.BuildInfo, input string) (*runner.RunInfo, error) {
 	var stdout bytes.Buffer
 
 	cmd := exec.CommandContext(ctx, "python3", build.ArtifactPath)
+	cmd.Stdin = strings.NewReader(input)
 	cmd.Stdout = &stdout
 
 	started := time.Now()

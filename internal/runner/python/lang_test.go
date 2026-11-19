@@ -21,6 +21,9 @@ var (
 
 	//go:embed testdata/throws.py
 	ThrowingSolution string
+
+	//go:embed testdata/input.py
+	InputSolution string
 )
 
 func skipWithoutPython(t *testing.T) {
@@ -44,7 +47,7 @@ func TestBuildAndRun(t *testing.T) {
 
 	defer os.RemoveAll(filepath.Dir(build.ArtifactPath))
 
-	run, err := language.Run(bgCtx, build)
+	run, err := language.Run(bgCtx, build, "")
 
 	if err != nil {
 		t.Error(err)
@@ -108,7 +111,7 @@ func TestRunErrors(t *testing.T) {
 
 	defer os.RemoveAll(filepath.Dir(build.ArtifactPath))
 
-	run, err := language.Run(bgCtx, build)
+	run, err := language.Run(bgCtx, build, "")
 
 	if err == nil {
 		t.Error("expected the run to fail")
@@ -136,6 +139,34 @@ func TestRunErrors(t *testing.T) {
 		return strings.Contains(line, `code.py", line 7,`)
 	}) {
 		t.Errorf("expected stack trace on line of submitted code, got: %q", run.Errors)
+		return
+	}
+}
+
+func TestRunInput(t *testing.T) {
+	skipWithoutPython(t)
+
+	bgCtx := context.Background()
+	language := &PythonLanguage{}
+
+	build, err := language.Build(bgCtx, InputSolution)
+
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	defer os.RemoveAll(filepath.Dir(build.ArtifactPath))
+
+	run, err := language.Run(bgCtx, build, "1abc2\npqr3stu8vwx\na1b2c3d4e5f\n")
+
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if run.PartOne != "1abc2,pqr3stu8vwx,a1b2c3d4e5f" {
+		t.Errorf("unexpected part one, expected: 1abc2,pqr3stu8vwx,a1b2c3d4e5f, got: %s", run.PartOne)
 		return
 	}
 }

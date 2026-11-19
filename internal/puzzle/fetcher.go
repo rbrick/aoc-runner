@@ -16,6 +16,9 @@ import (
 const (
 	EventsURL = "https://adventofcode.com/events"
 	BaseURL   = "https://adventofcode.com"
+
+	// sent with every request, AoC asks automated tools to identify themselves
+	UserAgent = "aoc-runner/1.0"
 )
 
 var (
@@ -63,6 +66,8 @@ func (f *EventFetcher) makeGet(ctx context.Context, url string) (*http.Response,
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Set("User-Agent", UserAgent)
 
 	response, err := f.client.Do(req)
 

@@ -111,10 +111,11 @@ func (*TypeScriptLanguage) Build(ctx context.Context, code string) (*runner.Buil
 	return build, nil
 }
 
-func (*TypeScriptLanguage) Run(ctx context.Context, build *runner.BuildInfo) (*runner.RunInfo, error) {
+func (*TypeScriptLanguage) Run(ctx context.Context, build *runner.BuildInfo, input string) (*runner.RunInfo, error) {
 	var stdout bytes.Buffer
 
 	cmd := exec.CommandContext(ctx, "node", "--enable-source-maps", build.ArtifactPath)
+	cmd.Stdin = strings.NewReader(input)
 	cmd.Stdout = &stdout
 
 	started := time.Now()

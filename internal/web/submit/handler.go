@@ -67,7 +67,7 @@ func (h *Handler) submit(reqCtx *echo.Context) error {
 	runCtx, cancel := context.WithTimeout(ctx, RunTimeout)
 	defer cancel()
 
-	run, err := language.Run(runCtx, build)
+	run, err := language.Run(runCtx, build, submission.Input)
 
 	if run == nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())

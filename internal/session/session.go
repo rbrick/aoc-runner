@@ -82,6 +82,7 @@ func verify(ctx context.Context, cookie *http.Cookie) (bool, error) {
 	}
 
 	req.AddCookie(cookie)
+	req.Header.Set("User-Agent", puzzle.UserAgent)
 
 	response, err := http.DefaultClient.Do(req)
 

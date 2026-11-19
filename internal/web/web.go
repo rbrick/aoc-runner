@@ -20,7 +20,7 @@ func Start(ctx context.Context, db *gorm.DB, session *session.Session, host stri
 		router := echo.New()
 
 		// register the event handler, puzzles are fetched as the logged in user
-		events.NewHandler(db, puzzle.NewEventFetcher(session.Client())).RegisterRoutes(router.Group("/events"))
+		events.NewHandler(db, puzzle.NewEventFetcher(session.Client()), session).RegisterRoutes(router.Group("/events"))
 		// register the auth handler
 		auth.NewHandler(session).RegisterRoutes(router.Group("/auth"))
 		// register the submission handler

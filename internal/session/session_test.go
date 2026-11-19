@@ -173,3 +173,25 @@ func TestClientSendsSession(t *testing.T) {
 		return
 	}
 }
+
+func TestLoginSendsUserAgent(t *testing.T) {
+	httpmock.Activate(t)
+	defer httpmock.Deactivate()
+
+	var agent string
+
+	httpmock.RegisterResponder(http.MethodGet, puzzle.BaseURL, func(r *http.Request) (*http.Response, error) {
+		agent = r.Header.Get("User-Agent")
+		return httpmock.NewStringResponse(http.StatusOK, LoggedInPage), nil
+	})
+
+	if err := NewSession(cookies(ValidSession)).Login(context.Background()); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if agent != puzzle.UserAgent {
+		t.Errorf("unexpected user agent, expected: %s, got: %q", puzzle.UserAgent, agent)
+		return
+	}
+}

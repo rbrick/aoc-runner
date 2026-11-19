@@ -5,5 +5,5 @@ import "context"
 type Language interface {
 	DefaultCode() string
 	Build(ctx context.Context, code string) (*BuildInfo, error)
-	Run(ctx context.Context, build *BuildInfo) (*RunInfo, error)
+	Run(ctx context.Context, build *BuildInfo, input string) (*RunInfo, error)
 }

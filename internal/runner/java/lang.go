@@ -90,13 +90,14 @@ func (*JavaLanguage) Build(ctx context.Context, code string) (*runner.BuildInfo,
 	return build, nil
 }
 
-func (*JavaLanguage) Run(ctx context.Context, build *runner.BuildInfo) (*runner.RunInfo, error) {
+func (*JavaLanguage) Run(ctx context.Context, build *runner.BuildInfo, input string) (*runner.RunInfo, error) {
 	var stdout bytes.Buffer
 
 	classPath := filepath.Dir(build.ArtifactPath)
 	className := strings.TrimSuffix(filepath.Base(build.ArtifactPath), filepath.Ext(build.ArtifactPath))
 
 	cmd := exec.CommandContext(ctx, "java", "-cp", classPath, className)
+	cmd.Stdin = strings.NewReader(input)
 	cmd.Stdout = &stdout
 
 	started := time.Now()

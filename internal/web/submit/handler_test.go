@@ -26,6 +26,9 @@ var (
 	//go:embed testdata/throws.py
 	ThrowingPythonSolution string
 
+	//go:embed testdata/input.py
+	InputPythonSolution string
+
 	//go:embed testdata/valid.go.txt
 	ValidGoSolution string
 
@@ -351,6 +354,35 @@ func TestSubmitOdinSuccess(t *testing.T) {
 
 	if result.Run.PartTwo != "two" {
 		t.Errorf("unexpected part two, expected: two, got: %s", result.Run.PartTwo)
+		return
+	}
+}
+
+func TestSubmitInput(t *testing.T) {
+	skipWithoutPython(t)
+
+	body, _ := json.Marshal(&SubmissionDTO{
+		Language: "python",
+		Code:     InputPythonSolution,
+		Input:    "1000\n2000\n\n3000\n",
+	})
+
+	rec := submit(setupRouter(), string(body))
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("unexpected status, expected: 200, got: %d", rec.Code)
+		return
+	}
+
+	var result ResultDTO
+
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if result.Run.PartOne != "1000,2000,3000" {
+		t.Errorf("unexpected part one, expected: 1000,2000,3000, got: %s", result.Run.PartOne)
 		return
 	}
 }

@@ -16,6 +16,8 @@ type Puzzle struct {
 	EventID int    `gorm:"column:event_id;uniqueIndex:idx_event_day"`
 	Day     string `gorm:"column:day;uniqueIndex:idx_event_day"`
 
-	Status    Status    `gorm:"column:status;"`
+	Status Status `gorm:"column:status;"`
+	// the user's puzzle input, cached since AoC asks not to download it repeatedly
+	Input     string    `gorm:"column:input;"`
 	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime;"`
 }

@@ -1,0 +1,15 @@
+import (
+	"io"
+	"strings"
+)
+
+type Solution struct{}
+
+func (s *Solution) PartOne(reader io.Reader) string {
+	input, _ := io.ReadAll(reader)
+	return strings.Join(strings.Fields(string(input)), ",")
+}
+
+func (s *Solution) PartTwo(reader io.Reader) string {
+	return "two"
+}

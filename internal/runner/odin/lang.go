@@ -91,10 +91,11 @@ func (*OdinLanguage) Build(ctx context.Context, code string) (*runner.BuildInfo,
 	return build, nil
 }
 
-func (*OdinLanguage) Run(ctx context.Context, build *runner.BuildInfo) (*runner.RunInfo, error) {
+func (*OdinLanguage) Run(ctx context.Context, build *runner.BuildInfo, input string) (*runner.RunInfo, error) {
 	var stdout bytes.Buffer
 
 	cmd := exec.CommandContext(ctx, build.ArtifactPath)
+	cmd.Stdin = strings.NewReader(input)
 	cmd.Stdout = &stdout
 
 	started := time.Now()
