@@ -78,6 +78,48 @@ monaco.languages.setMonarchTokensProvider("odin", {
   },
 } as monaco.languages.IMonarchLanguage);
 
+// monaco doesn't ship haskell either
+monaco.languages.register({ id: "haskell" });
+monaco.languages.setLanguageConfiguration("haskell", {
+  comments: { lineComment: "--", blockComment: ["{-", "-}"] },
+  brackets: [
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"],
+  ],
+  autoClosingPairs: [
+    { open: "{", close: "}" },
+    { open: "[", close: "]" },
+    { open: "(", close: ")" },
+    { open: '"', close: '"', notIn: ["string"] },
+  ],
+});
+monaco.languages.setMonarchTokensProvider("haskell", {
+  keywords: [
+    "module", "where", "import", "qualified", "as", "hiding", "data", "type", "newtype", "class",
+    "instance", "deriving", "let", "in", "if", "then", "else", "case", "of", "do", "forall",
+    "infix", "infixl", "infixr",
+  ],
+  tokenizer: {
+    root: [
+      [/\{-/, "comment", "@comment"],
+      [/--.*$/, "comment"],
+      [/[A-Z][\w']*/, "type"],
+      [/[a-z_][\w']*/, { cases: { "@keywords": "keyword", "@default": "identifier" } }],
+      [/"([^"\\]|\\.)*"/, "string"],
+      [/'([^'\\]|\\.)'/, "string"],
+      [/0[xX][0-9a-fA-F]+|\d+(\.\d+)?([eE][+-]?\d+)?/, "number"],
+      [/[{}()[\]]/, "@brackets"],
+      [/[:=<>!~?&|+\-*/^%.$@\\]+/, "operator"],
+    ],
+    comment: [
+      [/[^{-]+/, "comment"],
+      [/-\}/, "comment", "@pop"],
+      [/[{-]/, "comment"],
+    ],
+  },
+} as monaco.languages.IMonarchLanguage);
+
 // match the app's own surfaces instead of monaco's default themes
 monaco.editor.defineTheme("aoc-runner-light", {
   base: "vs",

@@ -5,6 +5,7 @@ import "../monaco";
 
 const labels: Record<string, string> = {
   go: "Go",
+  haskell: "Haskell",
   java: "Java",
   odin: "Odin",
   python: "Python",

@@ -40,6 +40,9 @@ var (
 
 	//go:embed testdata/valid.odin
 	ValidOdinSolution string
+
+	//go:embed testdata/valid.hs
+	ValidHaskellSolution string
 )
 
 func skipWithoutJava(t *testing.T) {
@@ -383,6 +386,34 @@ func TestSubmitInput(t *testing.T) {
 
 	if result.Run.PartOne != "1000,2000,3000" {
 		t.Errorf("unexpected part one, expected: 1000,2000,3000, got: %s", result.Run.PartOne)
+		return
+	}
+}
+
+func TestSubmitHaskellSuccess(t *testing.T) {
+	skipWithout(t, "ghc")
+
+	rec := submitCode(setupRouter(), "haskell", ValidHaskellSolution)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("unexpected status, expected: 200, got: %d", rec.Code)
+		return
+	}
+
+	var result ResultDTO
+
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if result.Run.PartOne != "one" {
+		t.Errorf("unexpected part one, expected: one, got: %s", result.Run.PartOne)
+		return
+	}
+
+	if result.Run.PartTwo != "two" {
+		t.Errorf("unexpected part two, expected: two, got: %s", result.Run.PartTwo)
 		return
 	}
 }

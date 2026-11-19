@@ -10,6 +10,7 @@ import (
 	"github.com/labstack/echo/v5"
 	"github.com/rbrick/aoc-runner/internal/runner"
 	"github.com/rbrick/aoc-runner/internal/runner/golang"
+	"github.com/rbrick/aoc-runner/internal/runner/haskell"
 	"github.com/rbrick/aoc-runner/internal/runner/java"
 	"github.com/rbrick/aoc-runner/internal/runner/odin"
 	"github.com/rbrick/aoc-runner/internal/runner/python"
@@ -92,6 +93,7 @@ func NewHandler() *Handler {
 			"java":       &java.JavaLanguage{},
 			"python":     &python.PythonLanguage{},
 			"go":         &golang.GoLanguage{},
+			"haskell":    &haskell.HaskellLanguage{},
 			"typescript": &typescript.TypeScriptLanguage{},
 			"rust":       &rust.RustLanguage{},
 			"odin":       &odin.OdinLanguage{},
