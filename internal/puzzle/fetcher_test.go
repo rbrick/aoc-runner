@@ -3,6 +3,7 @@ package puzzle
 import (
 	"context"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/jarcoal/httpmock"
@@ -20,6 +21,9 @@ var (
 
 	//go:embed testdata/days.html
 	SuccessfulDayFetch string
+
+	//go:embed testdata/problem.html
+	SuccessfulProblemFetch string
 )
 
 func htmlResponder(str string) httpmock.Responder {
@@ -92,4 +96,68 @@ func TestYearExtractor(t *testing.T) {
 		return
 	}
 
+}
+
+func TestFetchProblem(t *testing.T) {
+	httpmock.Activate(t)
+	defer httpmock.Deactivate()
+
+	httpmock.RegisterResponder(
+		http.MethodGet,
+		`=~^https://adventofcode\.com/(\d+)/day/(\d+)/?$`,
+		htmlResponder(SuccessfulProblemFetch),
+	)
+
+	bgCtx := context.Background()
+
+	fetcher := NewEventFetcher(http.DefaultClient)
+	problem, err := fetcher.FetchProblem(bgCtx, &Day{
+		Day: "Day 1",
+		URL: BaseURL + "/2025/day/1",
+	})
+
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if !strings.HasPrefix(problem.Body, `<article class="day-desc"><h2>--- Day 1: Test Puzzle ---</h2>`) {
+		t.Errorf("unexpected problem body start, got: %s", problem.Body)
+		return
+	}
+
+	if !strings.Contains(problem.Body, `<h2 id="part2">--- Part Two ---</h2>`) {
+		t.Errorf("expected part two in problem body, got: %s", problem.Body)
+		return
+	}
+
+	if strings.Contains(problem.Body, "Your puzzle answer was") {
+		t.Errorf("unexpected content outside of the puzzle articles, got: %s", problem.Body)
+		return
+	}
+
+	if len(problem.Examples) != 3 {
+		t.Errorf("unexpected examples length, expected: 3, got: %d", len(problem.Examples))
+		return
+	}
+
+	if problem.Examples[1] != "(()(\n<)(>\n" {
+		t.Errorf("unexpected example, expected: %q, got: %q", "(()(\n<)(>\n", problem.Examples[1])
+		return
+	}
+
+	if len(problem.ExampleAnswers) != 2 {
+		t.Errorf("unexpected example answers length, expected: 2, got: %d", len(problem.ExampleAnswers))
+		return
+	}
+
+	if problem.ExampleAnswers[0] != "5" {
+		t.Errorf("unexpected part one example answer, expected: 5, got: %s", problem.ExampleAnswers[0])
+		return
+	}
+
+	if problem.ExampleAnswers[1] != "" {
+		t.Errorf("unexpected part two example answer, expected empty, got: %s", problem.ExampleAnswers[1])
+		return
+	}
 }

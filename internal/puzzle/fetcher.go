@@ -46,6 +46,13 @@ type Day struct {
 	Problem string `json:"problem"`
 }
 
+type Problem struct {
+	Body     string   `json:"body"`
+	Examples []string `json:"examples"`
+	// one per part, empty when the answer couldn't be found
+	ExampleAnswers []string `json:"example_answers"`
+}
+
 type EventFetcher struct {
 	client *http.Client
 }
@@ -136,6 +143,43 @@ func extractAttr(attrs []html.Attribute, key string) string {
 	return ""
 }
 
+// highlighted code is either <code><em>142</em></code>, <em><code>24000</code></em>
+// or the result at the end of a calculation, <code>1749 - 161 = <em>1588</em></code>
+func isHighlightedCode(n *html.Node) bool {
+	if n.Type != html.ElementNode || n.Parent == nil {
+		return false
+	}
+
+	if n.Data == "code" && n.Parent.Data == "em" {
+		// only when it's wrapped exactly, not <em>sum to <code>2020</code></em>
+		return n.Parent.FirstChild == n && n.Parent.LastChild == n
+	}
+
+	if n.Data == "em" && n.Parent.Data == "code" {
+		// highlights inside an example block aren't answers
+		if n.Parent.Parent != nil && n.Parent.Parent.Data == "pre" {
+			return false
+		}
+
+		return n.Parent.LastChild == n
+	}
+
+	return false
+}
+
+// joins all the text inside a node, examples can have <em> highlights inside them
+func extractText(n *html.Node) string {
+	var text strings.Builder
+
+	for child := range n.Descendants() {
+		if child.Type == html.TextNode {
+			text.WriteString(child.Data)
+		}
+	}
+
+	return text.String()
+}
+
 func (f *EventFetcher) fetchDays(ctx context.Context, event *Event) ([]Day, error) {
 	eventResponse, err := f.makeGet(ctx, event.URL)
 	if err != nil {
@@ -180,6 +224,80 @@ func (f *EventFetcher) parseDays(htmlBody io.Reader) ([]Day, error) {
 	}
 
 	return days, nil
+}
+
+func (f *EventFetcher) FetchProblem(ctx context.Context, day *Day) (*Problem, error) {
+	dayResponse, err := f.makeGet(ctx, day.URL)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer dayResponse.Body.Close()
+
+	return f.parseProblem(dayResponse.Body)
+}
+
+func (f *EventFetcher) parseProblem(htmlBody io.Reader) (*Problem, error) {
+	var body strings.Builder
+	var examples []string
+	var exampleAnswers []string
+
+	doc, err := html.Parse(htmlBody)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// part two is a second article, only shown once part one is solved
+	filter := func(n *html.Node) bool {
+		return n.Type == html.ElementNode && n.Data == "article" &&
+			checkAttr(n.Attr, "class", "day-desc")
+	}
+
+	// examples are in <pre><code> blocks, not every block is an input though (some are diagrams)
+	exampleFilter := func(n *html.Node) bool {
+		return n.Type == html.ElementNode && n.Data == "pre"
+	}
+
+	exampleApply := func(n *html.Node) error {
+		examples = append(examples, extractText(n))
+		return nil
+	}
+
+	// the example answer is usually the last highlighted value in a part
+	answer := ""
+
+	answerApply := func(n *html.Node) error {
+		answer = extractText(n)
+		return nil
+	}
+
+	apply := func(n *html.Node) error {
+		if err := f.eachNodeFunc(n, exampleFilter, exampleApply); err != nil {
+			return err
+		}
+
+		answer = ""
+
+		if err := f.eachNodeFunc(n, isHighlightedCode, answerApply); err != nil {
+			return err
+		}
+
+		exampleAnswers = append(exampleAnswers, answer)
+
+		return html.Render(&body, n)
+	}
+
+	if err := f.eachNodeFunc(doc, filter, apply); err != nil {
+		return nil, err
+	}
+
+	return &Problem{
+		Body:           body.String(),
+		Examples:       examples,
+		ExampleAnswers: exampleAnswers,
+	}, nil
 }
 
 func (f *EventFetcher) eachNodeFunc(root *html.Node, filter func(*html.Node) bool, apply func(*html.Node) error) error {
