@@ -1,32 +1,13 @@
-import { useEffect, useState } from "react";
-import { getProblem, type Problem } from "../api";
+import { useState } from "react";
+import type { Problem } from "../api";
 
 type Props = {
-  year: string;
-  day: number;
-  // bumped after logging in, so part two shows up for solved puzzles
-  refresh: number;
+  problem: Problem | null;
+  error: string | null;
+  onUseExample: (index: number) => void;
 };
 
-export function ProblemView({ year, day, refresh }: Props) {
-  const [problem, setProblem] = useState<Problem | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    setProblem(null);
-    setError(null);
-
-    getProblem(year, day)
-      .then((problem) => !cancelled && setProblem(problem))
-      .catch((err: Error) => !cancelled && setError(err.message));
-
-    return () => {
-      cancelled = true;
-    };
-  }, [year, day, refresh]);
-
+export function ProblemView({ problem, error, onUseExample }: Props) {
   if (error) {
     return <p className="muted">Couldn't load the puzzle: {error}</p>;
   }
@@ -47,7 +28,7 @@ export function ProblemView({ year, day, refresh }: Props) {
         <section className="examples">
           <h3>Examples</h3>
           {examples.map((example, index) => (
-            <Example key={index} index={index} text={example} />
+            <Example key={index} index={index} text={example} onUse={() => onUseExample(index)} />
           ))}
 
           <h3>Example answers</h3>
@@ -65,7 +46,7 @@ export function ProblemView({ year, day, refresh }: Props) {
   );
 }
 
-function Example({ index, text }: { index: number; text: string }) {
+function Example({ index, text, onUse }: { index: number; text: string; onUse: () => void }) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -82,9 +63,14 @@ function Example({ index, text }: { index: number; text: string }) {
     <figure className="example">
       <figcaption>
         <span>Example {index + 1}</span>
-        <button className="button button-small" onClick={copy}>
-          {copied ? "Copied" : "Copy"}
-        </button>
+        <span className="example-actions">
+          <button className="button button-small" onClick={onUse}>
+            Use as input
+          </button>
+          <button className="button button-small" onClick={copy}>
+            {copied ? "Copied" : "Copy"}
+          </button>
+        </span>
       </figcaption>
       <pre>{text}</pre>
     </figure>

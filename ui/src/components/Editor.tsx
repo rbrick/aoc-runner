@@ -1,5 +1,7 @@
-import type { KeyboardEvent } from "react";
+import MonacoEditor, { type OnMount } from "@monaco-editor/react";
+import { useEffect, useRef, useState } from "react";
 import type { Language } from "../api";
+import "../monaco";
 
 const labels: Record<string, string> = {
   go: "Go",
@@ -11,10 +13,22 @@ const labels: Record<string, string> = {
 };
 
 // go and odin are formatted with tabs, everything else with spaces
-const indents: Record<string, string> = {
-  go: "\t",
-  odin: "\t",
-};
+const usesTabs = new Set(["go", "odin"]);
+
+function useDarkMode() {
+  const query = "(prefers-color-scheme: dark)";
+  const [dark, setDark] = useState(() => window.matchMedia(query).matches);
+
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    const onChange = () => setDark(media.matches);
+
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
+
+  return dark;
+}
 
 type Props = {
   languages: Language[];
@@ -27,28 +41,15 @@ type Props = {
 };
 
 export function Editor({ languages, language, code, running, onLanguageChange, onCodeChange, onRun }: Props) {
-  function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
-      event.preventDefault();
-      onRun();
-      return;
-    }
+  const dark = useDarkMode();
 
-    // tab indents instead of leaving the editor, shift+tab still moves focus
-    if (event.key === "Tab" && !event.shiftKey) {
-      event.preventDefault();
+  // the keybinding is registered once, so it has to call the latest onRun
+  const runRef = useRef(onRun);
+  runRef.current = onRun;
 
-      const editor = event.currentTarget;
-      const indent = indents[language] ?? "    ";
-      const { selectionStart, selectionEnd } = editor;
-
-      onCodeChange(code.slice(0, selectionStart) + indent + code.slice(selectionEnd));
-
-      requestAnimationFrame(() => {
-        editor.selectionStart = editor.selectionEnd = selectionStart + indent.length;
-      });
-    }
-  }
+  const onMount: OnMount = (editor, monaco) => {
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => runRef.current());
+  };
 
   return (
     <div className="editor">
@@ -70,16 +71,33 @@ export function Editor({ languages, language, code, running, onLanguageChange, o
         </button>
       </div>
 
-      <textarea
-        className="code"
-        value={code}
-        onChange={(event) => onCodeChange(event.target.value)}
-        onKeyDown={onKeyDown}
-        spellCheck={false}
-        autoCapitalize="off"
-        autoComplete="off"
-        aria-label="Solution code"
-      />
+      <div className="monaco">
+        <div className="monaco-inner">
+          <MonacoEditor
+            height="100%"
+            language={language}
+            value={code}
+            theme={dark ? "aoc-runner-dark" : "aoc-runner-light"}
+            onChange={(value) => onCodeChange(value ?? "")}
+            onMount={onMount}
+            loading={<p className="muted">Loading editor…</p>}
+            options={{
+              fontFamily: 'ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace',
+              fontSize: 13.5,
+              lineHeight: 22,
+              tabSize: 4,
+              insertSpaces: !usesTabs.has(language),
+              detectIndentation: false,
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              automaticLayout: true,
+              padding: { top: 12, bottom: 12 },
+              renderLineHighlight: "line",
+              ariaLabel: "Solution code",
+            }}
+          />
+        </div>
+      </div>
     </div>
   );
 }

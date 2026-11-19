@@ -40,18 +40,43 @@ async function request<T>(path: string, init?: RequestInit, accept: number[] = [
   return body as T;
 }
 
-export async function getYears(): Promise<string[]> {
-  const body = await request<{ events: { year: string }[] | null }>("/events/");
-  return (body.events ?? []).map((event) => event.year).sort().reverse();
+// stars are only included when logged in
+export type Year = {
+  year: string;
+  stars?: number;
+};
+
+export type Day = {
+  number: number;
+  stars?: number;
+};
+
+export async function getYears(): Promise<Year[]> {
+  const body = await request<{ events: Year[] | null }>("/events/");
+  return (body.events ?? []).sort((a, b) => b.year.localeCompare(a.year));
 }
 
-export async function getDays(year: string): Promise<number[]> {
-  const body = await request<{ days: { day: string }[] | null }>(`/events/${year}`);
+export async function getDays(year: string): Promise<Day[]> {
+  const body = await request<{ days: Day[] | null }>(`/events/${year}`);
+  return body.days ?? [];
+}
 
-  return (body.days ?? [])
-    .map((day) => Number.parseInt(day.day.replace(/\D/g, ""), 10))
-    .filter((day) => !Number.isNaN(day))
-    .sort((a, b) => a - b);
+export class LoginRequiredError extends ApiError {}
+
+// the user's own puzzle input, the backend downloads it once with the AoC session
+export async function getInput(year: string, day: number): Promise<string> {
+  const response = await fetch(`/events/${year}/${day}/input`);
+
+  if (response.status === 401) {
+    throw new LoginRequiredError("Log in to Advent of Code to load your input.");
+  }
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new ApiError(body?.message ?? `${response.status} ${response.statusText}`);
+  }
+
+  return response.text();
 }
 
 export function getProblem(year: string, day: number): Promise<Problem> {
@@ -64,11 +89,11 @@ export async function getLanguages(): Promise<Language[]> {
 }
 
 // 422 means the code failed to build or run, the body still has the output
-export async function submit(language: string, code: string): Promise<Result> {
+export async function submit(language: string, code: string, input: string): Promise<Result> {
   const response = await fetch("/submit/", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ language, code }),
+    body: JSON.stringify({ language, code, input }),
   });
 
   const body = await response.json().catch(() => null);
@@ -87,4 +112,22 @@ export function getSession(): Promise<Session> {
 // 401 means no browser session was found, the body says where to log in
 export function login(): Promise<Session> {
   return request<Session>("/auth/login", { method: "POST" }, [401]);
+}
+
+export type SubmitResult = {
+  outcome: "correct" | "incorrect" | "rate_limited" | "wrong_level" | "unknown";
+  // AoC's own message
+  message: string;
+  wait_seconds?: number;
+  // the answer was already rejected before, so it wasn't sent again
+  duplicate?: boolean;
+};
+
+// level 1 is part one, level 2 is part two
+export function submitAnswer(year: string, day: number, level: 1 | 2, answer: string): Promise<SubmitResult> {
+  return request<SubmitResult>(`/events/${year}/${day}/answer`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ level, answer }),
+  });
 }
