@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/rbrick/aoc-runner/internal/database"
+	"github.com/rbrick/aoc-runner/internal/session"
 	"github.com/rbrick/aoc-runner/internal/web"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -26,7 +27,10 @@ var httpCmd = &cobra.Command{
 		// seed database
 		cobra.CheckErr(database.Seed(ctx, db))
 
-		cobra.CheckErr(web.Start(ctx, db, viper.GetString("server.host")))
+		// cookies are read from the browser when /auth/login is called
+		aocSession := session.NewSession(session.ReadBrowserCookies)
+
+		cobra.CheckErr(web.Start(ctx, db, aocSession, viper.GetString("server.host")))
 	},
 }
 

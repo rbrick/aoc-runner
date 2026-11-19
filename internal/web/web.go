@@ -4,18 +4,22 @@ import (
 	"context"
 
 	"github.com/labstack/echo/v5"
+	"github.com/rbrick/aoc-runner/internal/session"
+	"github.com/rbrick/aoc-runner/internal/web/auth"
 	"github.com/rbrick/aoc-runner/internal/web/events"
 	"github.com/rbrick/aoc-runner/internal/web/submit"
 	"gorm.io/gorm"
 )
 
-func Start(ctx context.Context, db *gorm.DB, host string) error {
+func Start(ctx context.Context, db *gorm.DB, session *session.Session, host string) error {
 	errChan := make(chan error, 1)
 	go func(errChan chan error) {
 		router := echo.New()
 
 		// register the event handler
 		events.NewHandler(db).RegisterRoutes(router.Group("/events"))
+		// register the auth handler
+		auth.NewHandler(session).RegisterRoutes(router.Group("/auth"))
 		// register the submission handler
 		submit.NewHandler().RegisterRoutes(router.Group("/submit"))
 
