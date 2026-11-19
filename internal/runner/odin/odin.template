@@ -1,0 +1,27 @@
+package main
+
+import runner_fmt "core:fmt"
+import runner_os "core:os"
+
+{{ .Solution }}
+
+main :: proc() {
+	std_in, err := runner_os.read_entire_file(runner_os.stdin, context.allocator)
+
+	if err != nil {
+		panic("failed to read stdin")
+	}
+
+	original_out := runner_os.stdout
+
+	// redirect stdout to stderr
+	runner_os.stdout = runner_os.stderr
+
+	answer_one := part_one(string(std_in))
+	answer_two := part_two(string(std_in))
+
+	runner_os.stdout = original_out
+
+	// answers are separated by a NUL byte so either can span multiple lines
+	runner_fmt.printf("%s\x00%s", answer_one, answer_two)
+}

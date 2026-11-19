@@ -19,6 +19,24 @@ var (
 
 	//go:embed testdata/throws.java
 	ThrowingSolution string
+
+	//go:embed testdata/valid.py
+	ValidPythonSolution string
+
+	//go:embed testdata/throws.py
+	ThrowingPythonSolution string
+
+	//go:embed testdata/valid.go.txt
+	ValidGoSolution string
+
+	//go:embed testdata/valid.ts
+	ValidTypeScriptSolution string
+
+	//go:embed testdata/valid.rs
+	ValidRustSolution string
+
+	//go:embed testdata/valid.odin
+	ValidOdinSolution string
 )
 
 func skipWithoutJava(t *testing.T) {
@@ -28,6 +46,20 @@ func skipWithoutJava(t *testing.T) {
 
 	if _, err := exec.LookPath("java"); err != nil {
 		t.Skip("java is not installed")
+	}
+}
+
+func skipWithoutPython(t *testing.T) {
+	if _, err := exec.LookPath("python3"); err != nil {
+		t.Skip("python3 is not installed")
+	}
+}
+
+func skipWithout(t *testing.T, binaries ...string) {
+	for _, binary := range binaries {
+		if _, err := exec.LookPath(binary); err != nil {
+			t.Skip(binary + " is not installed")
+		}
 	}
 }
 
@@ -75,8 +107,13 @@ func TestSubmitSuccess(t *testing.T) {
 		return
 	}
 
-	if result.Run.Output != "one\ntwo\n" {
-		t.Errorf("unexpected output, expected: %q, got: %q", "one\ntwo\n", result.Run.Output)
+	if result.Run.PartOne != "one" {
+		t.Errorf("unexpected part one, expected: one, got: %s", result.Run.PartOne)
+		return
+	}
+
+	if result.Run.PartTwo != "two" {
+		t.Errorf("unexpected part two, expected: two, got: %s", result.Run.PartTwo)
 		return
 	}
 }
@@ -128,6 +165,192 @@ func TestSubmitRunError(t *testing.T) {
 
 	if !strings.Contains(strings.Join(result.Run.Errors, "\n"), "RuntimeException: boom") {
 		t.Errorf("expected exception in run errors, got: %q", result.Run.Errors)
+		return
+	}
+}
+
+func TestSubmitPythonSuccess(t *testing.T) {
+	skipWithoutPython(t)
+
+	rec := submitCode(setupRouter(), "python", ValidPythonSolution)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("unexpected status, expected: 200, got: %d", rec.Code)
+		return
+	}
+
+	var result ResultDTO
+
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if result.Run.PartOne != "one" {
+		t.Errorf("unexpected part one, expected: one, got: %s", result.Run.PartOne)
+		return
+	}
+
+	if result.Run.PartTwo != "two" {
+		t.Errorf("unexpected part two, expected: two, got: %s", result.Run.PartTwo)
+		return
+	}
+}
+
+func TestSubmitPythonCompileError(t *testing.T) {
+	skipWithoutPython(t)
+
+	rec := submitCode(setupRouter(), "python", "not python(")
+
+	if rec.Code != http.StatusUnprocessableEntity {
+		t.Errorf("unexpected status, expected: 422, got: %d", rec.Code)
+		return
+	}
+
+	var result ResultDTO
+
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if len(result.Build.Errors) == 0 {
+		t.Error("expected syntax errors")
+		return
+	}
+}
+
+func TestSubmitPythonRunError(t *testing.T) {
+	skipWithoutPython(t)
+
+	rec := submitCode(setupRouter(), "python", ThrowingPythonSolution)
+
+	if rec.Code != http.StatusUnprocessableEntity {
+		t.Errorf("unexpected status, expected: 422, got: %d", rec.Code)
+		return
+	}
+
+	var result ResultDTO
+
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if !strings.Contains(strings.Join(result.Run.Errors, "\n"), "RuntimeError: boom") {
+		t.Errorf("expected exception in run errors, got: %q", result.Run.Errors)
+		return
+	}
+}
+
+func TestSubmitGoSuccess(t *testing.T) {
+	skipWithout(t, "go")
+
+	rec := submitCode(setupRouter(), "go", ValidGoSolution)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("unexpected status, expected: 200, got: %d", rec.Code)
+		return
+	}
+
+	var result ResultDTO
+
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if result.Run.PartOne != "one" {
+		t.Errorf("unexpected part one, expected: one, got: %s", result.Run.PartOne)
+		return
+	}
+
+	if result.Run.PartTwo != "two" {
+		t.Errorf("unexpected part two, expected: two, got: %s", result.Run.PartTwo)
+		return
+	}
+}
+
+func TestSubmitTypeScriptSuccess(t *testing.T) {
+	skipWithout(t, "tsc", "node")
+
+	rec := submitCode(setupRouter(), "typescript", ValidTypeScriptSolution)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("unexpected status, expected: 200, got: %d", rec.Code)
+		return
+	}
+
+	var result ResultDTO
+
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if result.Run.PartOne != "one" {
+		t.Errorf("unexpected part one, expected: one, got: %s", result.Run.PartOne)
+		return
+	}
+
+	if result.Run.PartTwo != "two" {
+		t.Errorf("unexpected part two, expected: two, got: %s", result.Run.PartTwo)
+		return
+	}
+}
+
+func TestSubmitRustSuccess(t *testing.T) {
+	skipWithout(t, "rustc")
+
+	rec := submitCode(setupRouter(), "rust", ValidRustSolution)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("unexpected status, expected: 200, got: %d", rec.Code)
+		return
+	}
+
+	var result ResultDTO
+
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if result.Run.PartOne != "one" {
+		t.Errorf("unexpected part one, expected: one, got: %s", result.Run.PartOne)
+		return
+	}
+
+	if result.Run.PartTwo != "two" {
+		t.Errorf("unexpected part two, expected: two, got: %s", result.Run.PartTwo)
+		return
+	}
+}
+
+func TestSubmitOdinSuccess(t *testing.T) {
+	skipWithout(t, "odin")
+
+	rec := submitCode(setupRouter(), "odin", ValidOdinSolution)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("unexpected status, expected: 200, got: %d", rec.Code)
+		return
+	}
+
+	var result ResultDTO
+
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if result.Run.PartOne != "one" {
+		t.Errorf("unexpected part one, expected: one, got: %s", result.Run.PartOne)
+		return
+	}
+
+	if result.Run.PartTwo != "two" {
+		t.Errorf("unexpected part two, expected: two, got: %s", result.Run.PartTwo)
 		return
 	}
 }

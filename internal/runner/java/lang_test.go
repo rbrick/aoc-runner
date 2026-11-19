@@ -48,15 +48,20 @@ func TestBuildAndRun(t *testing.T) {
 
 	defer os.RemoveAll(filepath.Dir(build.ArtifactPath))
 
-	run, err := language.Run(bgCtx, build.ArtifactPath)
+	run, err := language.Run(bgCtx, build)
 
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	if run.Output != "one\ntwo\n" {
-		t.Errorf("unexpected output, expected: %q, got: %q", "one\ntwo\n", run.Output)
+	if run.PartOne != "one" {
+		t.Errorf("unexpected part one, expected: one, got: %s", run.PartOne)
+		return
+	}
+
+	if run.PartTwo != "two" {
+		t.Errorf("unexpected part two, expected: two, got: %s", run.PartTwo)
 		return
 	}
 }
@@ -71,6 +76,13 @@ func TestBuildErrors(t *testing.T) {
 
 	if err == nil {
 		t.Error("expected compilation to fail")
+		return
+	}
+
+	if !slices.ContainsFunc(build.Errors, func(line string) bool {
+		return strings.Contains(line, `code.java:3:`)
+	}) {
+		t.Errorf("expected error on line of submitted code, got: %q", build.Errors)
 		return
 	}
 
@@ -100,7 +112,7 @@ func TestRunErrors(t *testing.T) {
 
 	defer os.RemoveAll(filepath.Dir(build.ArtifactPath))
 
-	run, err := language.Run(bgCtx, build.ArtifactPath)
+	run, err := language.Run(bgCtx, build)
 
 	if err == nil {
 		t.Error("expected the run to fail")
@@ -121,6 +133,13 @@ func TestRunErrors(t *testing.T) {
 		return strings.Contains(line, "RuntimeException: boom")
 	}) {
 		t.Errorf("expected exception in errors, got: %q", run.Errors)
+		return
+	}
+
+	if !slices.ContainsFunc(run.Errors, func(line string) bool {
+		return strings.Contains(line, `code.java:8)`)
+	}) {
+		t.Errorf("expected stack trace on line of submitted code, got: %q", run.Errors)
 		return
 	}
 }

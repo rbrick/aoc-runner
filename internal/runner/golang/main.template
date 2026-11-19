@@ -1,0 +1,31 @@
+package main
+
+import (
+	"fmt"
+	"io"
+	"os"
+	"strings"
+)
+
+func main() {
+	stdIn, err := io.ReadAll(os.Stdin)
+
+	if err != nil {
+		panic(err)
+	}
+
+	solution := &Solution{}
+
+	originalOut := os.Stdout
+
+	// redirect stdout to stderr
+	os.Stdout = os.Stderr
+
+	partOne := solution.PartOne(strings.NewReader(string(stdIn)))
+	partTwo := solution.PartTwo(strings.NewReader(string(stdIn)))
+
+	os.Stdout = originalOut
+
+	// answers are separated by a NUL byte so either can span multiple lines
+	fmt.Printf("%s\x00%s", partOne, partTwo)
+}

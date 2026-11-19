@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 	"time"
@@ -34,6 +35,14 @@ var rawJavaTemplate string
 // parse the java template
 var JavaTemplate *template.Template = template.Must(template.New("java").Parse(rawJavaTemplate))
 
+var (
+	// the line the submitted code starts after in the template
+	solutionOffset = runner.LineOffset(rawJavaTemplate, runner.SolutionMarker)
+
+	// matches line numbers in errors that point at the generated source
+	linePattern = regexp.MustCompile(regexp.QuoteMeta(SourceFileName) + `:(\d+)`)
+)
+
 type TemplateData struct {
 	Solution string
 }
@@ -59,10 +68,13 @@ func (*JavaLanguage) Build(ctx context.Context, code string) (*runner.BuildInfo,
 	started := time.Now()
 	compileErrors, err := runner.CaptureStderr(cmd)
 
+	codeLines := strings.Count(code, "\n") + 1
+
 	build := &runner.BuildInfo{
 		ArtifactPath: path,
+		CodeLines:    codeLines,
 		Duration:     time.Since(started),
-		Errors:       compileErrors,
+		Errors:       runner.MapLines(compileErrors, linePattern, solutionOffset, codeLines),
 	}
 
 	if err != nil {
@@ -74,11 +86,11 @@ func (*JavaLanguage) Build(ctx context.Context, code string) (*runner.BuildInfo,
 	return build, nil
 }
 
-func (*JavaLanguage) Run(ctx context.Context, artifactPath string) (*runner.RunInfo, error) {
+func (*JavaLanguage) Run(ctx context.Context, build *runner.BuildInfo) (*runner.RunInfo, error) {
 	var stdout bytes.Buffer
 
-	classPath := filepath.Dir(artifactPath)
-	className := strings.TrimSuffix(filepath.Base(artifactPath), filepath.Ext(artifactPath))
+	classPath := filepath.Dir(build.ArtifactPath)
+	className := strings.TrimSuffix(filepath.Base(build.ArtifactPath), filepath.Ext(build.ArtifactPath))
 
 	cmd := exec.CommandContext(ctx, "java", "-cp", classPath, className)
 	cmd.Stdout = &stdout
@@ -86,10 +98,13 @@ func (*JavaLanguage) Run(ctx context.Context, artifactPath string) (*runner.RunI
 	started := time.Now()
 	runErrors, err := runner.CaptureStderr(cmd)
 
+	partOne, partTwo := runner.ParseAnswers(stdout.String())
+
 	run := &runner.RunInfo{
-		Output:   stdout.String(),
+		PartOne:  partOne,
+		PartTwo:  partTwo,
 		Duration: time.Since(started),
-		Errors:   runErrors,
+		Errors:   runner.MapLines(runErrors, linePattern, solutionOffset, build.CodeLines),
 	}
 
 	if err != nil {

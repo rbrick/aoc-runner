@@ -27,6 +27,6 @@ void main() throws IOException {
     }
 
 
-    System.out.println(partOne);
-    System.out.println(partTwo);
+    // answers are separated by a NUL byte so either can span multiple lines
+    System.out.print(partOne + '\0' + partTwo);
 }

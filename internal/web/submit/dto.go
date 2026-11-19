@@ -14,7 +14,8 @@ type BuildDTO struct {
 
 type RunDTO struct {
 	DurationMS int64    `json:"duration_ms"`
-	Output     string   `json:"output"`
+	PartOne    string   `json:"part_one"`
+	PartTwo    string   `json:"part_two"`
 	Errors     []string `json:"errors"`
 }
 
@@ -33,7 +34,8 @@ func mapBuild(build *runner.BuildInfo) *BuildDTO {
 func mapRun(run *runner.RunInfo) *RunDTO {
 	return &RunDTO{
 		DurationMS: run.Duration.Milliseconds(),
-		Output:     run.Output,
+		PartOne:    run.PartOne,
+		PartTwo:    run.PartTwo,
 		Errors:     run.Errors,
 	}
 }

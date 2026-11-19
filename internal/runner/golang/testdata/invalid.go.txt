@@ -1,0 +1,11 @@
+import "io"
+
+type Solution struct{}
+
+func (s *Solution) PartOne(reader io.Reader) string {
+	return 1
+}
+
+func (s *Solution) PartTwo(reader io.Reader) string {
+	return "two"
+}

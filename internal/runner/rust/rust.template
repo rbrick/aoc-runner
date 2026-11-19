@@ -1,0 +1,30 @@
+use std::collections::*;
+
+{{ .Solution }}
+
+extern "C" {
+    fn dup(fd: i32) -> i32;
+    fn dup2(src: i32, dst: i32) -> i32;
+}
+
+fn main() {
+    use std::io::{Read as _, Write as _};
+
+    let mut std_in = String::new();
+    std::io::stdin().read_to_string(&mut std_in).unwrap();
+
+    let solution = Solution {};
+
+    // redirect stdout to stderr
+    let original_out = unsafe { dup(1) };
+    unsafe { dup2(2, 1) };
+
+    let part_one = solution.part_one(&std_in);
+    let part_two = solution.part_two(&std_in);
+
+    std::io::stdout().flush().unwrap();
+    unsafe { dup2(original_out, 1) };
+
+    // answers are separated by a NUL byte so either can span multiple lines
+    print!("{}\0{}", part_one, part_two);
+}

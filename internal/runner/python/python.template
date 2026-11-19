@@ -1,0 +1,31 @@
+import collections
+import contextlib
+import functools
+import heapq
+import io
+import itertools
+import math
+import re
+import sys
+
+{{ .Solution }}
+
+
+def main():
+    std_in = sys.stdin.read()
+    solution = Solution()
+
+    part_one = ""
+    part_two = ""
+
+    # redirect stdout to stderr
+    with contextlib.redirect_stdout(sys.stderr):
+        part_one = solution.part_one(io.StringIO(std_in))
+        part_two = solution.part_two(io.StringIO(std_in))
+
+    # answers are separated by a NUL byte so either can span multiple lines
+    sys.stdout.write(f"{part_one}\0{part_two}")
+
+
+if __name__ == "__main__":
+    main()

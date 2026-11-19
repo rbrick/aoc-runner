@@ -9,7 +9,12 @@ import (
 
 	"github.com/labstack/echo/v5"
 	"github.com/rbrick/aoc-runner/internal/runner"
+	"github.com/rbrick/aoc-runner/internal/runner/golang"
 	"github.com/rbrick/aoc-runner/internal/runner/java"
+	"github.com/rbrick/aoc-runner/internal/runner/odin"
+	"github.com/rbrick/aoc-runner/internal/runner/python"
+	"github.com/rbrick/aoc-runner/internal/runner/rust"
+	"github.com/rbrick/aoc-runner/internal/runner/typescript"
 )
 
 const (
@@ -58,7 +63,7 @@ func (h *Handler) submit(reqCtx *echo.Context) error {
 	runCtx, cancel := context.WithTimeout(ctx, RunTimeout)
 	defer cancel()
 
-	run, err := language.Run(runCtx, build.ArtifactPath)
+	run, err := language.Run(runCtx, build)
 
 	if run == nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -80,7 +85,12 @@ func (h *Handler) submit(reqCtx *echo.Context) error {
 func NewHandler() *Handler {
 	return &Handler{
 		languages: map[string]runner.Language{
-			"java": &java.JavaLanguage{},
+			"java":       &java.JavaLanguage{},
+			"python":     &python.PythonLanguage{},
+			"go":         &golang.GoLanguage{},
+			"typescript": &typescript.TypeScriptLanguage{},
+			"rust":       &rust.RustLanguage{},
+			"odin":       &odin.OdinLanguage{},
 		},
 	}
 }

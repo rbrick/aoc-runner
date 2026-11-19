@@ -1,0 +1,29 @@
+declare const process: any;
+declare function require(module: string): any;
+
+{{ .Solution }}
+
+function main() {
+    const stdIn: string = require("fs").readFileSync(0, "utf8");
+    const solution = new Solution();
+
+    const originalLog = console.log;
+
+    let partOne = "";
+    let partTwo = "";
+
+    try {
+        // redirect stdout to stderr
+        console.log = console.error;
+
+        partOne = solution.partOne(stdIn);
+        partTwo = solution.partTwo(stdIn);
+    } finally {
+        console.log = originalLog;
+    }
+
+    // answers are separated by a NUL byte so either can span multiple lines
+    process.stdout.write(`${partOne}\u0000${partTwo}`);
+}
+
+main();
