@@ -60,6 +60,10 @@ type TemplateData struct {
 
 type GoLanguage struct{}
 
+func (*GoLanguage) DefaultCode() string {
+	return DefaultSolutionCode
+}
+
 func (*GoLanguage) Build(ctx context.Context, code string) (*runner.BuildInfo, error) {
 	directory, err := os.MkdirTemp("", "aoc-runner-go-")
 

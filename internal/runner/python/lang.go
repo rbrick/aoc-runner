@@ -46,6 +46,10 @@ type TemplateData struct {
 
 type PythonLanguage struct{}
 
+func (*PythonLanguage) DefaultCode() string {
+	return DefaultSolutionCode
+}
+
 func (*PythonLanguage) Build(ctx context.Context, code string) (*runner.BuildInfo, error) {
 	directory, err := os.MkdirTemp("", "aoc-runner-python-")
 

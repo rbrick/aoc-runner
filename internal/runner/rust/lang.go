@@ -52,6 +52,10 @@ type TemplateData struct {
 
 type RustLanguage struct{}
 
+func (*RustLanguage) DefaultCode() string {
+	return DefaultSolutionCode
+}
+
 func (*RustLanguage) Build(ctx context.Context, code string) (*runner.BuildInfo, error) {
 	directory, err := os.MkdirTemp("", "aoc-runner-rust-")
 

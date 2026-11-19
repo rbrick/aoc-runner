@@ -49,6 +49,10 @@ type TemplateData struct {
 
 type JavaLanguage struct{}
 
+func (*JavaLanguage) DefaultCode() string {
+	return DefaultSolutionCode
+}
+
 func (*JavaLanguage) Build(ctx context.Context, code string) (*runner.BuildInfo, error) {
 	directory, err := os.MkdirTemp("", "aoc-runner-java-")
 

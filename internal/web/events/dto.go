@@ -1,6 +1,9 @@
 package events
 
-import "github.com/rbrick/aoc-runner/internal/model"
+import (
+	"github.com/rbrick/aoc-runner/internal/model"
+	"github.com/rbrick/aoc-runner/internal/puzzle"
+)
 
 type EventDTO struct {
 	Year string `json:"year"`
@@ -45,4 +48,18 @@ func mapPuzzles(puzzles []model.Puzzle) *EventDaysDTO {
 		Days: dtos,
 	}
 
+}
+
+type ProblemDTO struct {
+	Body           string   `json:"body"`
+	Examples       []string `json:"examples"`
+	ExampleAnswers []string `json:"example_answers"`
+}
+
+func mapProblem(problem *puzzle.Problem) *ProblemDTO {
+	return &ProblemDTO{
+		Body:           problem.Body,
+		Examples:       problem.Examples,
+		ExampleAnswers: problem.ExampleAnswers,
+	}
 }

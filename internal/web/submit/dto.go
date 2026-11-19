@@ -1,6 +1,11 @@
 package submit
 
-import "github.com/rbrick/aoc-runner/internal/runner"
+import (
+	"slices"
+	"strings"
+
+	"github.com/rbrick/aoc-runner/internal/runner"
+)
 
 type SubmissionDTO struct {
 	Language string `json:"language"`
@@ -37,5 +42,33 @@ func mapRun(run *runner.RunInfo) *RunDTO {
 		PartOne:    run.PartOne,
 		PartTwo:    run.PartTwo,
 		Errors:     run.Errors,
+	}
+}
+
+type LanguageDTO struct {
+	Name        string `json:"name"`
+	DefaultCode string `json:"default_code"`
+}
+
+type LanguagesDTO struct {
+	Languages []LanguageDTO `json:"languages"`
+}
+
+func mapLanguages(languages map[string]runner.Language) *LanguagesDTO {
+	var dtos []LanguageDTO
+
+	for name, language := range languages {
+		dtos = append(dtos, LanguageDTO{
+			Name:        name,
+			DefaultCode: language.DefaultCode(),
+		})
+	}
+
+	slices.SortFunc(dtos, func(a, b LanguageDTO) int {
+		return strings.Compare(a.Name, b.Name)
+	})
+
+	return &LanguagesDTO{
+		Languages: dtos,
 	}
 }

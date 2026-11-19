@@ -48,6 +48,10 @@ type TemplateData struct {
 
 type OdinLanguage struct{}
 
+func (*OdinLanguage) DefaultCode() string {
+	return DefaultSolutionCode
+}
+
 func (*OdinLanguage) Build(ctx context.Context, code string) (*runner.BuildInfo, error) {
 	directory, err := os.MkdirTemp("", "aoc-runner-odin-")
 

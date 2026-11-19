@@ -26,6 +26,10 @@ type Handler struct {
 	languages map[string]runner.Language
 }
 
+func (h *Handler) listLanguages(reqCtx *echo.Context) error {
+	return reqCtx.JSON(http.StatusOK, mapLanguages(h.languages))
+}
+
 func (h *Handler) submit(reqCtx *echo.Context) error {
 	ctx := reqCtx.Request().Context()
 

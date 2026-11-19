@@ -50,6 +50,10 @@ type TemplateData struct {
 
 type TypeScriptLanguage struct{}
 
+func (*TypeScriptLanguage) DefaultCode() string {
+	return DefaultSolutionCode
+}
+
 func (*TypeScriptLanguage) Build(ctx context.Context, code string) (*runner.BuildInfo, error) {
 	directory, err := os.MkdirTemp("", "aoc-runner-typescript-")
 
