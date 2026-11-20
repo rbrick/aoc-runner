@@ -108,6 +108,47 @@ func TestLoginNoSession(t *testing.T) {
 	}
 }
 
+func TestLogout(t *testing.T) {
+	httpmock.Activate(t)
+	defer httpmock.Deactivate()
+
+	router := setupRouter("good")
+
+	if _, _, err := request(router, http.MethodPost, "/auth/login"); err != nil {
+		t.Error(err)
+		return
+	}
+
+	rec, result, err := request(router, http.MethodPost, "/auth/logout")
+
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("unexpected status, expected: 200, got: %d", rec.Code)
+		return
+	}
+
+	if result.LoggedIn {
+		t.Error("expected to be logged out")
+		return
+	}
+
+	_, result, err = request(router, http.MethodGet, "/auth/")
+
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if result.LoggedIn {
+		t.Error("expected status to be logged out after logout")
+		return
+	}
+}
+
 func TestStatusLoggedOut(t *testing.T) {
 	httpmock.Activate(t)
 	defer httpmock.Deactivate()

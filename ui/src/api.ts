@@ -114,6 +114,11 @@ export function login(): Promise<Session> {
   return request<Session>("/auth/login", { method: "POST" }, [401]);
 }
 
+// only forgets the session on the server, adventofcode.com stays logged in
+export function logout(): Promise<Session> {
+  return request<Session>("/auth/logout", { method: "POST" });
+}
+
 export type SubmitResult = {
   outcome: "correct" | "incorrect" | "rate_limited" | "wrong_level" | "unknown";
   // AoC's own message

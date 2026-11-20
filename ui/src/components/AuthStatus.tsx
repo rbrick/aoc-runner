@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { ApiError, getSession, login, type Session } from "../api";
+import { ApiError, getSession, login, logout, type Session } from "../api";
 
 type Props = {
   onLogin: () => void;
+  onLogout: () => void;
 };
 
-export function AuthStatus({ onLogin }: Props) {
+export function AuthStatus({ onLogin, onLogout }: Props) {
   const [session, setSession] = useState<Session | null>(null);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,10 +35,28 @@ export function AuthStatus({ onLogin }: Props) {
     }
   }
 
+  async function tryLogout() {
+    setChecking(true);
+    setError(null);
+
+    try {
+      setSession(await logout());
+      onLogout();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setChecking(false);
+    }
+  }
+
   if (session?.logged_in) {
     return (
       <div className="auth">
+        {error && <p className="auth-hint auth-error">{error}</p>}
         <span className="pill pill-ok">Logged in</span>
+        <button className="button button-small" onClick={tryLogout} disabled={checking}>
+          {checking ? "Logging out…" : "Log out"}
+        </button>
       </div>
     );
   }

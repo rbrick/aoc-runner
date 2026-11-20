@@ -54,6 +54,13 @@ func (s *Session) Login(ctx context.Context) error {
 	return ErrNotLoggedIn
 }
 
+// forgets the session, the browser stays logged in to Advent of Code
+func (s *Session) Logout() {
+	s.mu.Lock()
+	s.cookie = nil
+	s.mu.Unlock()
+}
+
 func (s *Session) LoggedIn() bool {
 	return s.Cookie() != nil
 }

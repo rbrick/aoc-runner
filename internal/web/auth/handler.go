@@ -49,6 +49,15 @@ func (h *Handler) login(reqCtx *echo.Context) error {
 	})
 }
 
+func (h *Handler) logout(reqCtx *echo.Context) error {
+	h.session.Logout()
+
+	return reqCtx.JSON(http.StatusOK, &SessionDTO{
+		LoggedIn: false,
+		LoginURL: session.LoginURL,
+	})
+}
+
 func NewHandler(session *session.Session) *Handler {
 	return &Handler{
 		session: session,

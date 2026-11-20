@@ -100,6 +100,7 @@ The web UI is a thin client over a JSON API, so you can script against it too.
 | POST   | `/submit/`                        | Build and run `{language, code, input}`         |
 | GET    | `/auth/`                          | Session status                                  |
 | POST   | `/auth/login`                     | Read the session cookie from the browser        |
+| POST   | `/auth/logout`                    | Forget the session (AoC stays logged in)        |
 
 ## Project layout
 

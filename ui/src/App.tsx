@@ -8,7 +8,7 @@ import { href, useRoute } from "./router";
 export function App() {
   const route = useRoute();
 
-  // bumped after logging in, so stars, part two and inputs are fetched again
+  // bumped after logging in or out, so stars, part two and inputs are fetched again
   const [refresh, setRefresh] = useState(0);
 
   return (
@@ -40,7 +40,7 @@ export function App() {
             </>
           )}
         </nav>
-        <AuthStatus onLogin={() => setRefresh((n) => n + 1)} />
+        <AuthStatus onLogin={() => setRefresh((n) => n + 1)} onLogout={() => setRefresh((n) => n + 1)} />
       </header>
 
       <main className="main">

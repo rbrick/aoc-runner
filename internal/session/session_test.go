@@ -122,6 +122,27 @@ func TestLoginReadError(t *testing.T) {
 	}
 }
 
+func TestLogout(t *testing.T) {
+	httpmock.Activate(t)
+	defer httpmock.Deactivate()
+
+	setupAdventOfCode()
+
+	session := NewSession(cookies(ValidSession))
+
+	if err := session.Login(context.Background()); err != nil {
+		t.Error(err)
+		return
+	}
+
+	session.Logout()
+
+	if session.LoggedIn() {
+		t.Error("expected to be logged out")
+		return
+	}
+}
+
 func TestClientSendsSession(t *testing.T) {
 	httpmock.Activate(t)
 	defer httpmock.Deactivate()
