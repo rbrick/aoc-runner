@@ -33,6 +33,14 @@ You can leave out any toolchain you don't need. Only that language will fail.
 
 ## Getting started
 
+The quickest way is the start script. It builds the UI, installs `aoc-runner` into your Go bin directory with `go install`, and starts the server:
+
+```sh
+./start.sh
+```
+
+Any arguments are passed through to `aoc-runner http`. To do the same steps by hand:
+
 ```sh
 # build the web UI, it's embedded into the binary
 go generate ./ui
